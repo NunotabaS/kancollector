@@ -14,13 +14,17 @@ stat
 	Gets current player's status
 
 ships	[Order]
-	Gets a list of the player's ships
+	Gets a list of the player's ships. Order can be "repeat" to find repeated 
+	ships.
 
 docks
 	Prints out the status of the docks
 
-shipinfo	[id]
+shipinfo <id>
 	Prints information about a specific ship
 	
-bookinfo	[manual-id]
+bookinfo <manual-id>
 	Prints information about a ship from the ship collector book
+	
+mission	<mission_id> <ship_team_id>
+	Starts a mission.

@@ -113,6 +113,42 @@ exports.ships = function(key, sortkey, callback){
 	});
 };
 
+exports.mission = function(key, mission_id, deck_id, callback){
+	exports.api("req_mission/start",exports.join(exports.create(key),{
+			"api_deck_id":deck_id,
+			"api_mission_id":mission_id,
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = {};
+			for(var j in resp.parsed){
+				data[j.replace(/^api_/,"")] = resp.parsed[j];
+			}
+			callback({code:200, resp: data, src: resp});
+		}
+	});
+};
+
+exports.teams = function(key, callback){
+	exports.api("get_member/deck_port",exports.create(key), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var teams = [];
+			for(var i = 0; i < resp.parsed.api_data.length;i++){
+				var team = resp.parsed.api_data[i];
+				var team_stats = {};
+				for(var j in team){
+					team_stats[j.replace(/^api_/,"")] = team[j];
+				}
+				teams.push(team_stats);
+			}
+			callback({code:200, resp: teams, src: resp});
+		}
+	});
+};
+
 exports.join = function(obja, objb){
 	for(var x in objb){
 		obja[x] = objb[x];

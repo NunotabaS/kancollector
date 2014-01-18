@@ -76,6 +76,7 @@ fs.readFile("cachefile",function(err, data){
 						});
 						return;
 					}break;
+					
 					case "docks":{
 						if(command.length === 1){
 							api.stats_dock(sesn_key, function(stats){
@@ -103,6 +104,37 @@ fs.readFile("cachefile",function(err, data){
 						}
 						return;
 					}break;
+					
+					case "teams":{
+						api.teams(sesn_key, function(stats){
+								if(stats.code === 200){
+									var teams = stats.resp;
+									var out = "";
+									for(var i = 0; i < teams.length; i++){
+										var info = "[" + tools.pad(teams[i].id, 2) + "]";
+										info += " " + teams[i].name;
+										info += "(" + teams[i].ship.length + ")\n\t";
+										if(cache.ships){
+											for(var x = 0; x < teams[i].ship.length; x++){
+												var id = teams[i].ship[x];
+												if(id > 0){
+													info += tools.findById(cache.ships, SHIP_REF, id) + ",";
+												}else{
+													info += "Empty,";
+												}
+											}
+										}
+										out += info + "\n\n";
+									}
+									callback(out);
+								}else{
+									console.log(stats);
+									callback();
+								}
+							});
+						return;
+					}break;
+					
 					case "shipinfo":{
 						// Find ship
 						if(command.length < 2){
@@ -142,6 +174,7 @@ fs.readFile("cachefile",function(err, data){
 						callback(out);
 						return;
 					}break;
+					
 					case "ships":{
 						var s = 0;
 						if(command.length === 1){
@@ -194,6 +227,19 @@ fs.readFile("cachefile",function(err, data){
 						});					
 						return;
 					}break;
+					case "mission":{
+						if(command.length < 3){
+							callback("Not enough parameters!");
+							return;
+						}
+						api.mission(sesn_key, command[1], command[2], function(resp){
+							console.log(resp);
+							callback();
+						});
+						return;
+					}break;
+					
+					
 					case "help":{
 						var helpfile = command[1] ? command[1] : "help";
 						helpfile.replace(new RegExp("[/.]","g"),"");
