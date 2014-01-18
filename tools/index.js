@@ -47,16 +47,23 @@ exports.shipInfo = function(ship, SHIP_REF){
 	}
 	return info;
 };
-exports.findById = function(shipdb, ref, id){
+exports.findById = function(shipdb, ref, id, lv){
 	if(shipdb){
 		for(var x in shipdb){
 			if(shipdb[x].id === id){
 				var sid = shipdb[x];
+				var hp = sid.nowhp + "/" + sid.maxhp;
+				var nm = "";
 				if(ref[sid.sortno -1]){
-					return ref[sid.sortno -1]["name"];
+					nm = ref[sid.sortno -1]["name"];
 				}else{
-					return sid.sortno;
+					if(ref[sid.sortno - 277]){
+						nm = ref[sid.sortno - 277]["name"] + "改";
+					}else{
+						nm = sid.sortno;
+					}
 				}
+				return (lv ? "Lv." + exports.pad(sid.lv,2) + " " : "") + nm + (lv ? " (" + hp + ")" : "")
 			}
 		}
 		return id;

@@ -118,13 +118,13 @@ fs.readFile("cachefile",function(err, data){
 											for(var x = 0; x < teams[i].ship.length; x++){
 												var id = teams[i].ship[x];
 												if(id > 0){
-													info += tools.findById(cache.ships, SHIP_REF, id) + ",";
+													info += tools.findById(cache.ships, SHIP_REF, id, true) + "\n\t";
 												}else{
-													info += "Empty,";
+													info += "Empty\n\t";
 												}
 											}
 										}
-										out += info + "\n\n";
+										out += "\n" + info;
 									}
 									callback(out);
 								}else{
