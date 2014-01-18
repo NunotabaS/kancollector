@@ -55,8 +55,7 @@ exports.api = function(entry, data, callback){
 };
 
 exports.stats = function(key, callback){
-	var req = exports.create(key);
-	exports.api("get_member/basic",req, function(resp){
+	exports.api("get_member/basic", exports.create(key), function(resp){
 		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
 			callback({code:500, resp: resp});
 		}else{
@@ -65,6 +64,51 @@ exports.stats = function(key, callback){
 				stats[i.replace(/^api_/,"")] = resp.parsed.api_data[i];
 			}
 			callback({code:200, resp: stats, src: resp});
+		}
+	});
+};
+
+exports.stats_dock = function(key, callback){
+	var states = ["locked", "empty", "working"]
+	exports.api("get_member/ndock",exports.create(key), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var docks = [];
+			for(var i = 0; i < resp.parsed.api_data.length;i++){
+				var dock = resp.parsed.api_data[i];
+				var dockinfo = {
+					id : dock["api_id"],
+					ship : dock["api_ship_id"],
+					state: states[dock["api_state"] + 1],
+					complete : dock["api_complete_time"],
+					remaining: dock["api_complete_time"] > 0 ? (dock["api_complete_time"] - new Date().getTime()) : 0
+				};
+				docks.push(dockinfo);
+			}
+			callback({code:200, resp: docks, src: resp});
+		}
+	});
+};
+
+exports.ships = function(key, sortkey, callback){
+	exports.api("get_member/ship2",exports.join(exports.create(key),{
+			"api_sort_order":2,
+			"api_sort_key":sortkey,
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var ships = [];
+			for(var i = 0; i < resp.parsed.api_data.length;i++){
+				var ship = resp.parsed.api_data[i];
+				var ship_stats = {};
+				for(var j in ship){
+					ship_stats[j.replace(/^api_/,"")] = ship[j];
+				}
+				ships.push(ship_stats);
+			}
+			callback({code:200, resp: ships, src: resp});
 		}
 	});
 };
