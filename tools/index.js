@@ -1,6 +1,6 @@
 var pad = function(num, len){
 	num = "" + num;
-	while(num.length !== len){
+	while(num.length < len){
 		num = "0" + num;
 	}
 	return num;
@@ -30,7 +30,23 @@ exports.rarity = function(stars){
 	}
 	return out;
 }
-
+exports.shipInfo = function(ship, SHIP_REF){
+	var info = "[" + 
+		exports.pad(ship.id, 3) + "] <\u001b[1;33m" + 
+			exports.rarity((SHIP_REF[ship.sortno - 1] ? SHIP_REF[ship.sortno - 1]["rare"] : 0))
+		+ "\u001b[0m> Lv." + 
+		exports.pad(ship.lv, 2);
+	if(ship.sortno < 170){
+		info += " " + SHIP_REF[ship.sortno - 1]["name"] + " ";
+	}else{
+		try{
+			info += " " + SHIP_REF[ship.sortno - 277]["name"] + "改";
+		}catch(e){
+			info += " " + ship.sortno;
+		}
+	}
+	return info;
+};
 exports.findById = function(shipdb, ref, id){
 	if(shipdb){
 		for(var x in shipdb){

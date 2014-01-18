@@ -150,32 +150,43 @@ fs.readFile("cachefile",function(err, data){
 							switch(command[1]){
 								case "id": s = 0; break;
 								case "level": s = 1; break;
+								case "repeat": s = 0; break;
 							}
 						}
+						var hasSeenShip = {};
 						api.ships(sesn_key,s, function(stats){
 							if(stats.code === 200){
 								var ships = stats.resp;
 								cache.ships = ships;
-								cache.ships = cache.ships;
 								saveCache();
+								var out = "";
 								for(var i = 0; i < ships.length; i++){
-									var info = "[" + 
-										tools.pad(ships[i].id, 3) + "] <\u001b[1;33m" + 
-											tools.rarity((SHIP_REF[ships[i].sortno - 1] ? SHIP_REF[ships[i].sortno - 1]["rare"] : 0))
-										+ "\u001b[0m> Lv." + 
-										tools.pad(ships[i].lv, 2);
-									if(ships[i].sortno < 170){
-										info += " " + SHIP_REF[ships[i].sortno - 1]["name"];
+									var ship_type_id = tools.pad(ships[i].sortno, 4);
+									if(!hasSeenShip[ship_type_id]){
+										hasSeenShip[ship_type_id] = [ships[i]];
 									}else{
-										try{
-											info += " " + SHIP_REF[ships[i].sortno - 277]["name"] + "改";
-										}catch(e){
-											info += " " + ships[i].sortno;
+										hasSeenShip[ship_type_id].push(ships[i]);
+									}
+									if(command[1] === "repeat") continue;
+									var info = tools.shipInfo(ships[i], SHIP_REF);
+									if(i % 2 == 0){
+										out += info + "\t\t\t";
+									}else{
+										out += info + "\n";
+									}
+								}
+								if(command[1] === "repeat"){
+									for(var x in hasSeenShip){
+										if(hasSeenShip[x].length > 1){
+											out += "<" + x + ">:\n" 
+											for(var i = 0; i < hasSeenShip[x].length; i++){
+												out += tools.shipInfo(hasSeenShip[x][i], SHIP_REF) + "; ";
+											}
+											out += "\n";
 										}
 									}
-									console.log(info);
 								}
-								callback();
+								callback(out);
 							}else{
 								console.log(stats);
 								callback();
