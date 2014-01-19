@@ -92,7 +92,7 @@ fs.readFile("cachefile",function(err, data){
 						});
 						return;
 					}break;
-					
+					case "dock":
 					case "docks":{
 						if(command.length === 1){
 							api.stats_dock(sesn_key, function(stats){
@@ -133,12 +133,13 @@ fs.readFile("cachefile",function(err, data){
 						}
 						return;
 					}break;
-					
+					case "fleets":
 					case "teams":{
 						api.teams(sesn_key, function(stats){
 								if(stats.code === 200){
 									var teams = stats.resp;
 									cache.teams = teams;
+									saveCache();
 									var out = "";
 									for(var i = 0; i < teams.length; i++){
 										var info = "[" + tools.pad(teams[i].id, 2) + "]";
@@ -279,7 +280,7 @@ fs.readFile("cachefile",function(err, data){
 							callback("Ship not in database. Maybe its a 改 ship! No information");
 							return;
 						}
-						var out = "\u001b[31;1m[" + tools.pad(ship.id, 3) + "] " + ref.name + " \u001b[0m (Lv." + ship.lv + ")\n";
+						var out = "[" + tools.pad(ship.id, 3) + "] " + tools.colorName(ship,ref.name,true) + " (Lv." + ship.lv + ")\n";
 						out += "Rarity : <\u001b[1;33m" + tools.rarity(ref.rare) + "\u001b[0m>\n";
 						out += "Class : " + ref["class"] + " > " + ref["class_id"] + "\n";
 						out += "Type : " + ref["type"] + "(" + ref["type_id"] + ")\n";
@@ -347,19 +348,124 @@ fs.readFile("cachefile",function(err, data){
 						return;
 					}break;
 					
+					case "expeditions":
+					case "missions":{
+						if(command[1] === "read" && cache.teams){
+							var missions = [];
+							for(var i = 0; i < cache.teams.length; i++){
+								var team = cache.teams[i];
+								if(team.mission[0] !== 0 && team.mission[1] !== 0){
+									missions.push({
+										"fleet": team.id,
+										"mission_id": team.mission[1],
+										"end": team.mission[2],
+									});
+								}
+							}
+							cache.missions = missions;
+							saveCache();
+						}
+						if(!cache.missions){
+							callback("None.");
+							return;
+						}else{
+							var out = "";
+							for(var i = 0; i < cache.missions.length; i++){
+								out += "[" + tools.pad(cache.missions[i].fleet,2) + "] Remaining: " + 
+									tools.pretty_time(cache.missions[i].end - (new Date()).getTime());
+								out += "\n";
+							}
+							callback(out);
+							return;
+						}
+					}break;
+					
+					case "expedition":
 					case "mission":{
 						if(command.length < 3){
 							callback("Not enough parameters!");
 							return;
 						}
-						api.mission(sesn_key, command[1], command[2], function(resp){
-							console.log(resp);
-							callback();
+						api.mission(sesn_key, parseInt(command[1]), parseInt(command[2]), function(resp){
+							if(!cache.missions)
+								cache.missions = [];
+							cache.missions.push({
+								"fleet": parseInt(command[2]),
+								"mission_id": parseInt(command[1]),
+								"end": resp.resp.complatetime
+							});
+							saveCache(function(){
+								console.log(resp);
+								callback();
+							});
 						});
 						return;
 					}break;
 					
-					
+					case "resupply":{
+						if(command.length < 4){
+							callback("Not enough parameters!");
+							return;
+						}
+						var idMap = {
+							"oil": 1,
+							"ammo": 2,
+							"all": 3,
+						}
+						switch(command[1]){
+							case "ship":{
+								api.charge(sesn_key, (!idMap[command[3]] ? 3 : idMap[command[3]]), 
+									[parseInt(command[2])], function(resp){
+									
+									if(resp.code === 200){
+										callback("Success.");
+									}else{
+										console.log(resp);
+										callback("Fail.");
+									}
+									return;
+								});
+								return;
+							}break;
+							case "fleet":{
+								// Get the ships of that fleet first
+								if(!cache.teams){
+									callback("You can only resupply a fleet after reading fleet info.");
+									return;
+								}
+								var team = null;
+								for(var i = 0; i < cache.teams.length; i++){
+									if(cache.teams[i].id === parseInt(command[2])){
+										team = cache.teams[i];
+									}
+								}
+								
+								if(!team){
+									callback("Team '" + command[2] + "' not found");
+									return;
+								}
+								var ships =[];
+								for(var i = 0; i < team.ship.length; i++){
+									if(team.ship[i] !== -1){
+										ships.push(team.ship[i]);
+									}
+								}
+								api.charge(sesn_key, (!idMap[command[3]] ? 3 : idMap[command[3]]), 
+									ships, function(resp){
+									if(resp.code === 200){
+										callback("Success.");
+									}else{
+										console.log(resp);
+										callback("Failed. Please check that you have sufficient resources.");
+									}
+									return;
+								});
+								return;
+							}break;
+						}
+						callback();
+						return
+					}break;
 					case "help":{
 						var helpfile = command[1] ? command[1] : "help";
 						helpfile.replace(new RegExp("[/.]","g"),"");

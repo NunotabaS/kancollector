@@ -36,10 +36,12 @@ exports.api = function(entry, data, callback){
 	
 		res.on("end", function(){
 			var parsed = null;
-			if(/^svdata=/.test(ret)){
+			if(/^.*?svdata=/.test(ret)){
 				try{
-					parsed = JSON.parse(ret.replace(/^svdata=/,""));
-				}catch(e){}
+					parsed = JSON.parse(ret.replace(/^.*?svdata=/,""));
+				}catch(e){
+					console.log(e);
+				}
 			}
 			callback({code:res.statusCode,resp:ret, parsed:parsed});
 		});
@@ -126,8 +128,8 @@ exports.mission = function(key, mission_id, deck_id, callback){
 			callback({code:500, resp: resp});
 		}else{
 			var data = {};
-			for(var j in resp.parsed){
-				data[j.replace(/^api_/,"")] = resp.parsed[j];
+			for(var j in resp.parsed.api_data){
+				data[j.replace(/^api_/,"")] = resp.parsed.api_data[j];
 			}
 			callback({code:200, resp: data, src: resp});
 		}
@@ -149,6 +151,23 @@ exports.teams = function(key, callback){
 				teams.push(team_stats);
 			}
 			callback({code:200, resp: teams, src: resp});
+		}
+	});
+};
+
+exports.charge = function(key, type, ship_ids,  callback){
+	exports.api("req_hokyu/charge",exports.join(exports.create(key),{
+			"api_kind":type,
+			"api_id_items":ship_ids.join(",")
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = {};
+			for(var j in resp.parsed){
+				data[j.replace(/^api_/,"")] = resp.parsed[j];
+			}
+			callback({code:200, resp: data, src: resp});
 		}
 	});
 };

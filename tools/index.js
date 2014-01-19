@@ -31,7 +31,7 @@ exports.rarity = function(stars){
 	return out;
 }
 
-var colorName = function(ship, shipname){
+var colorName = function(ship, shipname, display_info){
 	var health = 3;
 	if(ship.nowhp / ship.maxhp > 0.75){
 		health = 3;
@@ -42,13 +42,25 @@ var colorName = function(ship, shipname){
 	}else{
 		health = 0;
 	}
+	var ext = "";
+	if(display_info){
+		if(health == 2){
+			ext = "(小破)";
+		}else if(health == 1){
+			ext = "(中破)";
+		}else if(health == 0){
+			ext = "(大破)";
+		}
+	}
 	switch(health){
-		case 3: return "\u001b[1;32m" + shipname + "\u001b[0m"; break; //(Normal)
-		case 2: return shipname; break; // (Small Damage
-		case 1: return "\u001b[1;33m" + shipname + "\u001b[0m"; break; //(Med damage
-		case 0: return "\u001b[1;31m" + shipname + "\u001b[0m"; break; //(Large Damage
+		case 3: return "\u001b[1;32m" + shipname + "\u001b[0m" + ext; break; //(Normal)
+		case 2: return shipname + ext; break; // (Small Damage
+		case 1: return "\u001b[1;33m" + shipname + "\u001b[0m" + ext; break; //(Med damage
+		case 0: return "\u001b[1;31m" + shipname + "\u001b[0m" + ext; break; //(Large Damage
 	}
 }
+
+exports.colorName = colorName;
 
 exports.shipInfo = function(ship, SHIP_REF){
 	var info = "[" + 

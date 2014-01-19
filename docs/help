@@ -22,5 +22,7 @@ teams
 	Prints information about a team
 profiles [action] [profile name] [params...]
 	Modify, save and apply profiles to teams
+resupply [type=fleet/ship] [id=fleet-id/ship-id] [resource=oil/ammo/all]
+	Resupply a ship or all ships in a fleet
 mission	<mission_id> <ship_team_id>
 	Starts a mission.
