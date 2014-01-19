@@ -57,6 +57,7 @@ fs.readFile("cachefile",function(err, data){
 				var mission = cache.missions[i];
 				if(mission.end <= ((new Date()).getTime() + 30000)){
 					dispatchEvent("missionEnd", mission);
+					cache.missions.splice(i, 1);
 				}
 			}
 		}
@@ -64,24 +65,24 @@ fs.readFile("cachefile",function(err, data){
 	
 	addEventListener("missionEnd", function(e, d){
 		var t = function(){
-			api.result(sesn_key, d.fleet, function(resp){
-				if(resp.code === 200){
-					console.log("Mission " + d.mission_id  + " has ended successfully.");
-				}else{
-					console.log(d);
-					console.log(resp);
-					console.log("Mission end token read fail. Rescheduling....");
-					//setTimeout(t, 5000);
+			api.teams(sesn_key, function(r){
+				api.result(sesn_key, d.fleet, function(resp){
+					if(resp.code === 200){
+						console.log("Mission " + d.mission_id  + " has ended successfully.");
+					}else{
+						console.log(d);
+						console.log(resp);
+						console.log("Mission end token read fail. Rescheduling....");
+						return;
+					}
+					saveCache(function(){
+						dispatchEvent("missionResult",{code:resp.code, data:d});
+					});
 					return;
-				}
-				cache.missions.splice(cache.missions.indexOf(d),1);
-				saveCache(function(){
-					dispatchEvent("missionResult",{code:resp.code, data:d});
 				});
-				return;
 			});
-		}
-		setTimeout(t, 5000);
+		};
+		t();
 	});
 	
 	try{
@@ -425,9 +426,11 @@ fs.readFile("cachefile",function(err, data){
 							}else{
 								var out = "";
 								for(var i = 0; i < cache.missions.length; i++){
-									out += "[" + tools.pad(cache.missions[i].fleet,2) + "] Remaining: " + 
+									out += "Mission " + tools.pad(cache.missions[i].mission_id, 2) + 
+										" Fleet : " + tools.pad(cache.missions[i].fleet,2) + 
+										"   Time Remaining: [" + 
 										tools.pretty_time(cache.missions[i].end - (new Date()).getTime());
-									out += "\n";
+									out += "]\n";
 								}
 								callback(out);
 								return;
@@ -608,7 +611,7 @@ fs.readFile("cachefile",function(err, data){
 						return;
 					}break;
 					case "result":{
-						api.result(sesn_key, parseInt(command[2]), function(resp){
+						api.result(sesn_key, command[1], function(resp){
 							if(resp.code === 200){
 								console.log(resp.resp);
 								callback();
