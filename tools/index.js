@@ -30,23 +30,56 @@ exports.rarity = function(stars){
 	}
 	return out;
 }
+
+var colorName = function(ship, shipname){
+	var health = 3;
+	if(ship.nowhp / ship.maxhp > 0.75){
+		health = 3;
+	}else if(ship.nowhp / ship.maxhp > 0.5){
+		health = 2;
+	}else if(ship.nowhp / ship.maxhp > 0.2){
+		health = 1;
+	}else{
+		health = 0;
+	}
+	switch(health){
+		case 3: return "\u001b[1;32m" + shipname + "\u001b[0m"; break; //(Normal)
+		case 2: return shipname; break; // (Small Damage
+		case 1: return "\u001b[1;33m" + shipname + "\u001b[0m"; break; //(Med damage
+		case 0: return "\u001b[1;31m" + shipname + "\u001b[0m"; break; //(Large Damage
+	}
+}
+
 exports.shipInfo = function(ship, SHIP_REF){
 	var info = "[" + 
 		exports.pad(ship.id, 3) + "] <\u001b[1;33m" + 
 			exports.rarity((SHIP_REF[ship.sortno - 1] ? SHIP_REF[ship.sortno - 1]["rare"] : 0))
 		+ "\u001b[0m> Lv." + 
 		exports.pad(ship.lv, 2);
+	
 	if(ship.sortno < 170){
-		info += " " + SHIP_REF[ship.sortno - 1]["name"] + " ";
+		info += " " + colorName(ship,SHIP_REF[ship.sortno - 1]["name"]) + " ";
 	}else{
 		try{
-			info += " " + SHIP_REF[ship.sortno - 277]["name"] + "改";
+			info += " " + colorName(ship,SHIP_REF[ship.sortno - 277]["name"] + "改");
 		}catch(e){
-			info += " " + ship.sortno;
+			info += " " + colorName(ship,ship.sortno);
 		}
 	}
 	return info;
 };
+
+exports.hasShip = function(ships, id){
+	if(!ships)
+		return true;
+	for(var i = 0; i < ships.length; i++){
+		if(ships[i].id === id){
+			return true;
+		}
+	};
+	return false;
+};
+
 exports.findById = function(shipdb, ref, id, lv){
 	if(shipdb){
 		for(var x in shipdb){
@@ -63,7 +96,9 @@ exports.findById = function(shipdb, ref, id, lv){
 						nm = sid.sortno;
 					}
 				}
-				return (lv ? "Lv." + exports.pad(sid.lv,2) + " " : "") + nm + (lv ? " (" + hp + ")" : "")
+				return (lv ? "Lv." + exports.pad(sid.lv,2) + " " : "") + 
+					colorName(sid,nm) + 
+					(lv ? " (" + hp + ")" : "");
 			}
 		}
 		return id;

@@ -2,6 +2,10 @@ var http = require("http");
 var config = require("./config.js");
 var expedition = require("./expedition.js");
 
+exports.config = function(conf){
+	config.server = conf;
+};
+
 exports.create = function(token){
 	return {
 		api_token: token,
@@ -145,6 +149,42 @@ exports.teams = function(key, callback){
 				teams.push(team_stats);
 			}
 			callback({code:200, resp: teams, src: resp});
+		}
+	});
+};
+
+exports.dock = function(key, dock_id, ship_id, highspeed, callback){
+	exports.api("req_nyukyo/start",exports.join(exports.create(key),{
+			"api_ship_id":ship_id,
+			"api_ndock_id":dock_id,
+			"api_highspeed": (highspeed ? 1 : 0),
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = {};
+			for(var j in resp.parsed){
+				data[j.replace(/^api_/,"")] = resp.parsed[j];
+			}
+			callback({code:200, resp: data, src: resp});
+		}
+	});
+};
+
+exports.hensei = function(key, ship_id, position, team, callback){
+	exports.api("req_hensei/change",exports.join(exports.create(key),{
+			"api_ship_id":ship_id,
+			"api_ship_idx":position,
+			"api_id": team,
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = {};
+			for(var j in resp.parsed){
+				data[j.replace(/^api_/,"")] = resp.parsed[j];
+			}
+			callback({code:200, resp: data, src: resp});
 		}
 	});
 };

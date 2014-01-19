@@ -3,7 +3,8 @@ var api = require("./api"), tools = require("./tools");
 var sesn_key = "";
 var cache = {
 	key:"",
-	ships:null
+	ships:null,
+	server:null,
 };
 
 function saveCache(cb){
@@ -22,6 +23,10 @@ fs.readFile("cachefile",function(err, data){
 		}
 		if(!cache.ships)
 			cache.ships = null;
+		if(cache.server){
+			api.config(cache.server);
+			console.log("[OK] Loaded App Server " + cache.server);
+		}
 		sesn_key = cache.key ? cache.key : "";
 	}catch(e){
 		saveCache();
@@ -49,6 +54,16 @@ fs.readFile("cachefile",function(err, data){
 						});
 						return;
 					}break;
+					
+					case "server":{
+						cache.server = command[1];
+						api.config(cache.server);
+						saveCache(function(){
+							callback("[OK] Loaded App Server " + cache.server);
+						});
+						return;
+					}break;
+					
 					case "api":{
 						var req = api.create(sesn_key);
 						var entry = command[1] ? command[1] : "auth_member/logincheck";
@@ -64,6 +79,7 @@ fs.readFile("cachefile",function(err, data){
 						});
 						return;
 					}break;
+					
 					case "stat":{
 						api.stats(sesn_key, function(stats){
 							if(stats.code === 200){
@@ -90,7 +106,7 @@ fs.readFile("cachefile",function(err, data){
 											info += "Locked";
 										}else{
 											info += "Ship:" + 
-												tools.findById(cache.ships, SHIP_REF, docks[i].ship) + 
+												tools.findById(cache.ships, SHIP_REF, docks[i].ship, true) + 
 												" Remaining: " + tools.pretty_time(docks[i].remaining);
 										}
 										console.log(info);
@@ -101,6 +117,19 @@ fs.readFile("cachefile",function(err, data){
 									callback();
 								}
 							});
+						} else {
+							var dockid = parseInt(command[1]);
+							var shipid = parseInt(command[2]);
+							var highspeed = command[3] ? (command[3] === "true") : false;
+							if(shipid && tools.hasShip(cache.ships, shipid)){
+								api.dock(sesn_key, dockid, shipid, highspeed, function(resp){
+									console.log(resp);
+									callback();
+								});
+							}else{
+								callback("docks [dockid] [shipid] [highspeed=false]\n\tDock a ship to a dock");
+								return;
+							}
 						}
 						return;
 					}break;
@@ -109,6 +138,7 @@ fs.readFile("cachefile",function(err, data){
 						api.teams(sesn_key, function(stats){
 								if(stats.code === 200){
 									var teams = stats.resp;
+									cache.teams = teams;
 									var out = "";
 									for(var i = 0; i < teams.length; i++){
 										var info = "[" + tools.pad(teams[i].id, 2) + "]";
@@ -118,7 +148,8 @@ fs.readFile("cachefile",function(err, data){
 											for(var x = 0; x < teams[i].ship.length; x++){
 												var id = teams[i].ship[x];
 												if(id > 0){
-													info += tools.findById(cache.ships, SHIP_REF, id, true) + "\n\t";
+													info += tools.findById(cache.ships, SHIP_REF, id, true) + 
+														" [" + tools.pad(id,3) + "]\n\t";
 												}else{
 													info += "Empty\n\t";
 												}
@@ -132,6 +163,94 @@ fs.readFile("cachefile",function(err, data){
 									callback();
 								}
 							});
+						return;
+					}break;
+					
+					case "profiles":{
+						if(!cache.profiles){
+							cache.profiles = {};
+						}
+						if(command.length === 1){
+							var out = "Profiles:\n";
+							for(var i in cache.profiles){
+								out+= "[" + i + "] \n";
+								for(var j = 0; j < cache.profiles[i].length; j++){
+									out += "\t(" + tools.pad(cache.profiles[i][j],3) + ") "  + 
+										tools.findById(cache.ships, SHIP_REF, cache.profiles[i][j] , true) + "\n";
+								};
+							}
+							callback(out);
+							return;
+						}else{
+							if(command.length < 3){
+								callback("Not enough parameters.");
+								return;
+							}
+							switch(command[1]){
+								case "delete":{
+									if(cache.profiles[command[2]]){
+										delete cache.profiles[command[2]];
+										saveCache(function(){
+											callback("Deleted profile '" + command[2] + "'");
+										});
+									}else{
+										callback("Not found.");
+									}
+									return;
+								}break;
+								case "apply":{
+									var profile = cache.profiles[command[2]].slice(0);
+									if(!profile){
+										callback("Profile '" + command[2] + "' not found.");
+										return;
+									}
+									var pos = 0;
+									var pf = function(resp){
+										if(resp.code === 200){
+											var ship = profile.shift();
+											if(!ship){
+												callback("Done.");
+												return;	
+											}
+											console.log("Working on " + pos);
+											api.hensei(sesn_key, ship, pos++, parseInt(command[3]), pf); 
+										}else{
+											console.log(resp);
+											callback("Error!");
+										}
+									};
+									pf({code:200});
+									return;
+								}break;
+								case "view":{
+									
+								}break;
+								case "copy":{
+									// Copy a profile from an existing sentai
+									if(!cache.teams){
+										callback("Please run 'teams' to fetch team data first.");
+										return;
+									}
+									// Copy
+									var team = null;
+									for(var i = 0; i < cache.teams.length; i++){
+										if(cache.teams[i].id === parseInt(command[3])){
+											team = cache.teams[i];
+										}
+									}
+									if(!team){
+										callback("Team not found.");
+										return;
+									}
+									cache.profiles[command[2]] = team.ship.slice(0);
+									saveCache(function(){
+										callback("Saved team " + team.name + " to profile '" + command[3] + "'")
+									});
+									return;
+								}break;
+							}
+							callback();
+						}
 						return;
 					}break;
 					
@@ -227,6 +346,7 @@ fs.readFile("cachefile",function(err, data){
 						});					
 						return;
 					}break;
+					
 					case "mission":{
 						if(command.length < 3){
 							callback("Not enough parameters!");
