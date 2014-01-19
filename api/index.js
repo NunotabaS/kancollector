@@ -136,6 +136,22 @@ exports.mission = function(key, mission_id, deck_id, callback){
 	});
 };
 
+exports.result = function(key, deck_id, callback){
+	exports.api("req_mission/result",exports.join(exports.create(key),{
+			"api_deck_id":deck_id
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = {};
+			for(var j in resp.parsed.api_data){
+				data[j.replace(/^api_/,"")] = resp.parsed.api_data[j];
+			}
+			callback({code:200, resp: data, src: resp});
+		}
+	});
+};
+
 exports.teams = function(key, callback){
 	exports.api("get_member/deck_port",exports.create(key), function(resp){
 		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
@@ -171,6 +187,7 @@ exports.charge = function(key, type, ship_ids,  callback){
 		}
 	});
 };
+
 
 exports.dock = function(key, dock_id, ship_id, highspeed, callback){
 	exports.api("req_nyukyo/start",exports.join(exports.create(key),{

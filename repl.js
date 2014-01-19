@@ -6,6 +6,9 @@ var cache = {
 	ships:null,
 	server:null,
 };
+var events = {
+};
+
 
 function saveCache(cb){
 	fs.writeFile("cachefile", JSON.stringify(cache), {flag:"w"}, function(){
@@ -14,8 +17,73 @@ function saveCache(cb){
 	});
 };	
 
+function dispatchEvent(event, data){
+	if(events[event]){
+		for(var i = 0; i < events[event].length; i++){
+			events[event][i](event, data);
+		}
+	}
+};
+
+function addEventListener(event, handler){
+	if(events[event]){
+		events[event].push(handler);
+	}else{
+		events[event] = [handler];
+	}
+};
+
+function removeEventListener(event, listener){
+	if(events[event]){
+		for(var l in events[event]){
+			if(events[event][l] == listener){
+				events[event].splice(l, 1);
+				return;
+			}
+		}
+	}
+}
+
+
 fs.readFile("cachefile",function(err, data){
 	var SHIP_REF = tools.ship_db.ships("db");
+	
+	// Timeout to check for mission events
+	setInterval(function(){
+		// Event dispatcher;
+		// Loops through the current missions
+		if(cache.missions){
+			for(var i = 0; i < cache.missions.length; i++){
+				var mission = cache.missions[i];
+				if(mission.end <= ((new Date()).getTime() + 30000)){
+					dispatchEvent("missionEnd", mission);
+				}
+			}
+		}
+	}, 5000);
+	
+	addEventListener("missionEnd", function(e, d){
+		var t = function(){
+			api.result(sesn_key, d.fleet, function(resp){
+				if(resp.code === 200){
+					console.log("Mission " + d.mission_id  + " has ended successfully.");
+				}else{
+					console.log(d);
+					console.log(resp);
+					console.log("Mission end token read fail. Rescheduling....");
+					//setTimeout(t, 5000);
+					return;
+				}
+				cache.missions.splice(cache.missions.indexOf(d),1);
+				saveCache(function(){
+					dispatchEvent("missionResult",{code:resp.code, data:d});
+				});
+				return;
+			});
+		}
+		setTimeout(t, 5000);
+	});
+	
 	try{
 		cache = err ? {} : JSON.parse(data);
 		if(err){
@@ -350,34 +418,47 @@ fs.readFile("cachefile",function(err, data){
 					
 					case "expeditions":
 					case "missions":{
-						if(command[1] === "read" && cache.teams){
-							var missions = [];
-							for(var i = 0; i < cache.teams.length; i++){
-								var team = cache.teams[i];
-								if(team.mission[0] !== 0 && team.mission[1] !== 0){
-									missions.push({
-										"fleet": team.id,
-										"mission_id": team.mission[1],
-										"end": team.mission[2],
+						var check = function(){
+							if(!cache.missions || cache.missions.length === 0){
+								callback("None.");
+								return;
+							}else{
+								var out = "";
+								for(var i = 0; i < cache.missions.length; i++){
+									out += "[" + tools.pad(cache.missions[i].fleet,2) + "] Remaining: " + 
+										tools.pretty_time(cache.missions[i].end - (new Date()).getTime());
+									out += "\n";
+								}
+								callback(out);
+								return;
+							}
+						};
+						if(command[1] !== "cached"){
+							api.teams(sesn_key, function(stats){
+								if(stats.code === 200){
+									var teams = stats.resp;
+									cache.teams = teams;
+									var missions = [];
+									for(var i = 0; i < cache.teams.length; i++){
+										var team = cache.teams[i];
+										if(team.mission[0] !== 0 && team.mission[1] !== 0){
+											missions.push({
+												"fleet": team.id,
+												"mission_id": team.mission[1],
+												"end": team.mission[2],
+											});
+										}
+									}
+									cache.missions = missions;
+									saveCache(function(){
+										check();
 									});
 								}
-							}
-							cache.missions = missions;
-							saveCache();
-						}
-						if(!cache.missions){
-							callback("None.");
-							return;
+							});
 						}else{
-							var out = "";
-							for(var i = 0; i < cache.missions.length; i++){
-								out += "[" + tools.pad(cache.missions[i].fleet,2) + "] Remaining: " + 
-									tools.pretty_time(cache.missions[i].end - (new Date()).getTime());
-								out += "\n";
-							}
-							callback(out);
-							return;
+							check();
 						}
+						return;
 					}break;
 					
 					case "expedition":
@@ -387,6 +468,11 @@ fs.readFile("cachefile",function(err, data){
 							return;
 						}
 						api.mission(sesn_key, parseInt(command[1]), parseInt(command[2]), function(resp){
+							if(resp.code !== 200){
+								console.log(resp);
+								callback();
+								return;
+							}
 							if(!cache.missions)
 								cache.missions = [];
 							cache.missions.push({
@@ -394,6 +480,61 @@ fs.readFile("cachefile",function(err, data){
 								"mission_id": parseInt(command[1]),
 								"end": resp.resp.complatetime
 							});
+							if(command[3] === "reschedule"){
+								// Run this mission again
+								var mission_id = parseInt(command[1]);
+								var rf = function(e,data){
+									var d = data.data;
+									if(e === "missionResult" && d.mission_id = mission_id){
+										// This is correct
+										
+										// Resupply
+										if(!cache.teams){
+											callback("You can only resupply a fleet after reading fleet info.");
+											return;
+										}
+										var team = null;
+										for(var i = 0; i < cache.teams.length; i++){
+											if(cache.teams[i].id === parseInt(command[2])){
+												team = cache.teams[i];
+											}
+										}
+								
+										if(!team){
+											callback("Team '" + command[2] + "' not found");
+											return;
+										}
+										var ships = [];
+										for(var i = 0; i < team.ship.length; i++){
+											if(team.ship[i] !== -1){
+												ships.push(team.ship[i]);
+											}
+										}
+										
+										api.charge(sesn_key,3, ships, function(resp){
+											if(resp.code === 200){
+												// Start another mission
+												api.mission(sesn_key, d.mission_id, d.fleet, function(r){
+													if(!cache.missions)
+														cache.missions = [];
+													cache.missions.push({
+														"fleet": parseInt(command[2]),
+														"mission_id": parseInt(command[1]),
+														"end": resp.resp.complatetime
+													});
+													
+													addEventListener("missionResult", rf);
+												});
+												return;
+											}else{
+												console.log("Error. Resupply Failed");
+											}
+										});
+										
+										removeEventListener("missionResult", rf);
+									}
+								};
+							};
 							saveCache(function(){
 								console.log(resp);
 								callback();
@@ -464,8 +605,22 @@ fs.readFile("cachefile",function(err, data){
 							}break;
 						}
 						callback();
-						return
+						return;
 					}break;
+					case "result":{
+						api.result(sesn_key, parseInt(command[2]), function(resp){
+							if(resp.code === 200){
+								console.log(resp.resp);
+								callback();
+								return;
+							}else{
+								console.log(resp);
+								callback();
+								return;
+							}
+						});
+						return;
+					};break;
 					case "help":{
 						var helpfile = command[1] ? command[1] : "help";
 						helpfile.replace(new RegExp("[/.]","g"),"");
