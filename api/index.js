@@ -189,6 +189,23 @@ exports.charge = function(key, type, ship_ids,  callback){
 };
 
 
+exports.resources = function(key, callback){
+	exports.api("get_member/material",exports.create(key), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = resp.parsed.api_data;
+			var r = {
+				"fuel": data[0].api_value,
+				"ammo": data[1].api_value,
+				"steel": data[2].api_value,
+				"bauxite": data[3].api_value
+			};
+			callback({code:200, resp: r, src: resp});
+		}
+	});
+};
+
 exports.dock = function(key, dock_id, ship_id, highspeed, callback){
 	exports.api("req_nyukyo/start",exports.join(exports.create(key),{
 			"api_ship_id":ship_id,

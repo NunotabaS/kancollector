@@ -1,7 +1,9 @@
-var pad = function(num, len){
+var pad = function(num, len, padchar){
 	num = "" + num;
+	if(!padchar)
+		padchar = "0";
 	while(num.length < len){
-		num = "0" + num;
+		num = padchar + num;
 	}
 	return num;
 }
@@ -54,7 +56,7 @@ var colorName = function(ship, shipname, display_info){
 	}
 	switch(health){
 		case 3: return "\u001b[1;32m" + shipname + "\u001b[0m" + ext; break; //(Normal)
-		case 2: return shipname + ext; break; // (Small Damage
+		case 2: return "\u001b[1;37m" + shipname + "\u001b[0m" + ext; break; // (Small Damage
 		case 1: return "\u001b[1;33m" + shipname + "\u001b[0m" + ext; break; //(Med damage
 		case 0: return "\u001b[1;31m" + shipname + "\u001b[0m" + ext; break; //(Large Damage
 	}
