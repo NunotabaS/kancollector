@@ -15,12 +15,12 @@ Usage/使用方法/使用方法
     node repl.js
 
 4. Load API Key with this:
-   
+
     > key <YOUR_API_KEY>
     [OK] Set user apikey as <YOUR_API_KEY>
 
 5. For use "help" to list supported features.
-    
+
     > help
     
 
