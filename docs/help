@@ -1,35 +1,47 @@
-Commands:
+Commands:　コマンド
 ------------------------
 help	[command]
 	Prints out this help file
 	For help on commands, use 'help [command name]'
 key	[api_key]	
 	Sets and remembers your api key
+	API key設定する
 api	[api_entry] [data]
 	Calls the api with raw data. No options
 stat		
 	Gets current player's status
+	ステータス（でもデータ意味不明。。。）
 ships	[Order]
 	Gets a list of the player's ships. Order can be "repeat" to find repeated 
 	ships.
+	持った艦娘
 docks
 	Prints out the status of the docks
+	ドックステータス
 shipinfo <id>
 	Prints information about a specific ship
+	艦データ。船のレベル、HP、レア度、AA（対空）、ASW（対潜）とか
 bookinfo <manual-id>
 	Prints information about a ship from the ship collector book
+	（未実装）
 teams
 	Prints information about a team
+	チーム（戦隊）データ
 profiles [action] [profile name] [params...]
 	Modify, save and apply profiles to teams
+	プロファイル機能：戦隊構成をコピして、セブしてあとリロードする
 resupply [type=fleet/ship] [id=fleet-id/ship-id] [resource=oil/ammo/all]
 	Resupply a ship or all ships in a fleet
 mission	<mission_id> <ship_team_id>
 	Starts a mission.
+	遠征開始
 missions
 	List all ongoing missions (refreshed when called)
+	遠征リスト
 resources
 	Lists all your resource info
+	資材をリストする
 
 
 For help on automatic expeditions, type 'help autoexpedition'
+自動遠征機能のヘルプデータ："help autoexpedition"

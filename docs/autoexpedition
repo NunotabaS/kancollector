@@ -9,14 +9,14 @@ Automatic Expeditions
 
 自动远征（自動遠征プログラム）：
 1. 在 Kancolle 远征界面 寻找远征任务ID（艦コレのインタフェイスで遠征IDお探しています（遠征ネイムの左））
-2. 通过 teams 命令寻找 Team ID（TEAM IDは“teams”コマンドのリストID）
+2. 通过 teams 命令寻找 Team ID（TEAM IDは“teams”コマンドのリストIDです）
 3. 实行 team 给料（燃 & 弹）（燃料と弾薬を補充するコマンド）
 	resupply fleet <TEAMID> all
 4. 远征！（遠征開始！）
 	mission <MISSION ID> <TEAM ID> reschedule
 	
-注： reschedule 参数表示 远征无限循环。
-ノート：reschedule　は”遠征無限ループ”を表示する。遠征が終わる時は新しい遠征がはじまる時。。。
+注： reschedule 参数表示 远征无限循环。远征完毕自动补充燃料弹药。
+ノート：reschedule　は”遠征無限ループ”を表示する。遠征が終わる時は新しい遠征がはじまる時。。。燃料と弾薬自動補充あり
 	
 Notes:
 ------------
