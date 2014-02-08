@@ -26,3 +26,10 @@ resupply [type=fleet/ship] [id=fleet-id/ship-id] [resource=oil/ammo/all]
 	Resupply a ship or all ships in a fleet
 mission	<mission_id> <ship_team_id>
 	Starts a mission.
+missions
+	List all ongoing missions (refreshed when called)
+resources
+	Lists all your resource info
+
+
+For help on automatic expeditions, type 'help autoexpedition'

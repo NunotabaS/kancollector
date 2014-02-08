@@ -1,0 +1,27 @@
+Automatic Expeditions
+============
+1. First look up your mission id on Kancolle. It will be the number in the expedition interface.
+2. Look up the team you want to deploy with "teams"
+3. Resupply all the ships in team you wish to deploy with
+	resupply fleet <TEAMID> all
+4. Deploy to expeditions *with reschedule*
+	mission [MISSION_ID] [TEAMID] reschedule
+
+自动远征（自動遠征プログラム）：
+1. 在 Kancolle 远征界面 寻找远征任务ID（艦コレのインタフェイスで遠征IDお探しています（遠征ネイムの左））
+2. 通过 teams 命令寻找 Team ID（TEAM IDは“teams”コマンドのリストID）
+3. 实行 team 给料（燃 & 弹）（燃料と弾薬を補充するコマンド）
+	resupply fleet <TEAMID> all
+4. 远征！（遠征開始！）
+	mission <MISSION ID> <TEAM ID> reschedule
+	
+注： reschedule 参数表示 远征无限循环。
+ノート：reschedule　は”遠征無限ループ”を表示する。遠征が終わる時は新しい遠征がはじまる時。。。
+	
+Notes:
+------------
+If you use autoexpedition, please note that you will need to run 'api' once in a while to 
+accumulate the automatic growth of resources.
+
+
+	

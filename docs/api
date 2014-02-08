@@ -1,0 +1,6 @@
+api [ENTRY] [DATA AS JSON]
+==============
+Entry - The API entry point.
+Data - POST data provided in JSON format
+
+If no parameters provided we do 'logincheck' api.
