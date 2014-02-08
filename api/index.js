@@ -75,7 +75,7 @@ exports.stats = function(key, callback){
 };
 
 exports.stats_dock = function(key, callback){
-	var states = ["locked", "empty", "working"]
+	var states = ["locked", "empty", "working"];
 	exports.api("get_member/ndock",exports.create(key), function(resp){
 		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
 			callback({code:500, resp: resp});
@@ -84,11 +84,11 @@ exports.stats_dock = function(key, callback){
 			for(var i = 0; i < resp.parsed.api_data.length;i++){
 				var dock = resp.parsed.api_data[i];
 				var dockinfo = {
-					id : dock["api_id"],
-					ship : dock["api_ship_id"],
-					state: states[dock["api_state"] + 1],
-					complete : dock["api_complete_time"],
-					remaining: dock["api_complete_time"] > 0 ? (dock["api_complete_time"] - new Date().getTime()) : 0
+					id : dock.api_id,
+					ship : dock.api_ship_id,
+					state: states[dock.api_state + 1],
+					complete : dock.api_complete_time,
+					remaining: dock.api_complete_time > 0 ? (dock.api_complete_time - new Date().getTime()) : 0
 				};
 				docks.push(dockinfo);
 			}

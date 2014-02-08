@@ -1,1 +1,1 @@
-exports.server = "125.6.189.215"
+exports.server = "125.6.189.215";

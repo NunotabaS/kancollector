@@ -9,6 +9,8 @@ var pad = function(num, len, padchar){
 }
 exports.pad = pad;
 exports.pretty_time = function(time){
+	if(time < 0)
+		time = 0;
 	var seconds = Math.floor(time / 1000);
 	var minutes = Math.floor(seconds / 60);
 	var hours = Math.floor(minutes / 60);
