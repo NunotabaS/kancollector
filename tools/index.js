@@ -29,7 +29,7 @@ exports.rarity = function(stars){
 	for(var i = 0; i < stars; i++){
 		out+="*";
 	}
-	for(var j = 0; j < 6 - stars; j++){
+	for(var j = 0; j < 7 - stars; j++){
 		out+= " ";
 	}
 	return out;
@@ -67,20 +67,28 @@ var colorName = function(ship, shipname, display_info){
 exports.colorName = colorName;
 
 exports.shipInfo = function(ship, SHIP_REF){
+	if(/改/.test(ship.name) && !SHIP_REF[ship.sortno - 1]){
+		var nameBefore = ship.name.replace(/改$/,"");
+		var rarity = 0;
+		for(var i = 0; i < SHIP_REF.length; i++){
+			if(SHIP_REF[i] && SHIP_REF[i]["name"] === nameBefore){
+				rarity = SHIP_REF[i].rare + 1; 
+			}
+		}
+		SHIP_REF[ship.sortno - 1] = {
+			"name":ship.name,
+			"rare":rarity
+		};
+	}
 	var info = "[" + 
-		exports.pad(ship.id, 3) + "] <\u001b[1;33m" + 
+		exports.pad(ship.id, 4) + "] <\u001b[1;33m" + 
 			exports.rarity((SHIP_REF[ship.sortno - 1] ? SHIP_REF[ship.sortno - 1]["rare"] : 0))
 		+ "\u001b[0m> Lv." + 
 		exports.pad(ship.lv, 2);
-	
-	if(ship.sortno < 170){
-		info += " " + colorName(ship,SHIP_REF[ship.sortno - 1]["name"]) + " ";
+	if(ship.name){
+		info += " " + colorName(ship,ship.name) + (ship.name.length > 3  ? "" : " ");
 	}else{
-		try{
-			info += " " + colorName(ship,SHIP_REF[ship.sortno - 277]["name"] + "改");
-		}catch(e){
-			info += " " + colorName(ship,ship.sortno);
-		}
+		info += " " + colorName(ship,ship.sortno);
 	}
 	return info;
 };
@@ -103,13 +111,17 @@ exports.findById = function(shipdb, ref, id, lv){
 				var sid = shipdb[x];
 				var hp = sid.nowhp + "/" + sid.maxhp;
 				var nm = "";
-				if(ref[sid.sortno -1]){
-					nm = ref[sid.sortno -1]["name"];
+				if(sid.name){
+					nm = sid.name;
 				}else{
-					if(ref[sid.sortno - 277]){
-						nm = ref[sid.sortno - 277]["name"] + "改";
+					if(ref[sid.sortno -1]){
+						nm = ref[sid.sortno -1]["name"];
 					}else{
-						nm = sid.sortno;
+						if(ref[sid.sortno - 277]){
+							nm = ref[sid.sortno - 277]["name"] + "改";
+						}else{
+							nm = sid.sortno;
+						}
 					}
 				}
 				return (lv ? "Lv." + exports.pad(sid.lv,2) + " " : "") + 

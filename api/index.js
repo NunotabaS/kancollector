@@ -98,7 +98,7 @@ exports.stats_dock = function(key, callback){
 };
 
 exports.ships = function(key, sortkey, callback){
-	exports.api("get_member/ship2",exports.join(exports.create(key),{
+	exports.api("get_member/ship",exports.join(exports.create(key),{
 			"api_sort_order":2,
 			"api_sort_key":sortkey,
 		}), function(resp){

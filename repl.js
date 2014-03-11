@@ -367,7 +367,7 @@ fs.readFile("cachefile",function(err, data){
 							callback("Ship not in database. Maybe its a 改 ship! No information");
 							return;
 						}
-						var out = "[" + tools.pad(ship.id, 3) + "] " + tools.colorName(ship,ref.name,true) + " (Lv." + ship.lv + ")\n";
+						var out = "[" + tools.pad(ship.id, 3) + "] " + tools.colorName(ship,ship.name,true) + " (Lv." + ship.lv + ")\n";
 						out += "Rarity : <\u001b[1;33m" + tools.rarity(ref.rare) + "\u001b[0m>\n";
 						out += "Class : " + ref["class"] + " > " + ref["class_id"] + "\n";
 						out += "Type : " + ref["type"] + "(" + ref["type_id"] + ")\n";
@@ -410,7 +410,7 @@ fs.readFile("cachefile",function(err, data){
 									if(command[1] === "repeat") continue;
 									var info = tools.shipInfo(ships[i], SHIP_REF);
 									if(i % 2 == 0){
-										out += info + "\t\t\t";
+										out += info + (ships[i].name.length> 4 ? "\t\t" : "\t\t\t");
 									}else{
 										out += info + "\n";
 									}
