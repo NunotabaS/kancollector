@@ -67,7 +67,7 @@ var colorName = function(ship, shipname, display_info){
 exports.colorName = colorName;
 
 exports.shipInfo = function(ship, SHIP_REF){
-	if(/改/.test(ship.name) && !SHIP_REF[ship.sortno - 1]){
+	if((ship.name && /改/.test(ship.name)) && !SHIP_REF[ship.sortno - 1]){
 		var nameBefore = ship.name.replace(/改$/,"");
 		var rarity = 0;
 		for(var i = 0; i < SHIP_REF.length; i++){
@@ -125,8 +125,8 @@ exports.findById = function(shipdb, ref, id, lv){
 					}
 				}
 				return (lv ? "Lv." + exports.pad(sid.lv,2) + " " : "") + 
-					colorName(sid,nm) + 
-					(lv ? " (" + hp + ")" : "");
+					colorName(sid,nm)+ 
+					(lv ? "		(" + hp + ")" : "");
 			}
 		}
 		return id;

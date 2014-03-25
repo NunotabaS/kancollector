@@ -98,7 +98,11 @@ exports.stats_dock = function(key, callback){
 };
 
 exports.ships = function(key, sortkey, callback){
-	exports.api("get_member/ship",exports.join(exports.create(key),{
+	var apiAddr = "get_member/ship";
+	if(sortkey !== 0){
+		apiAddr = "get_member/ship2";
+	}
+	exports.api(apiAddr,exports.join(exports.create(key),{
 			"api_sort_order":2,
 			"api_sort_key":sortkey,
 		}), function(resp){
@@ -199,7 +203,10 @@ exports.resources = function(key, callback){
 				"fuel": data[0].api_value,
 				"ammo": data[1].api_value,
 				"steel": data[2].api_value,
-				"bauxite": data[3].api_value
+				"bauxite": data[3].api_value,
+				"quickconstruct":data[4].api_value,
+				"buckets":data[5].api_value,
+				"devmat":data[6].api_value,
 			};
 			callback({code:200, resp: r, src: resp});
 		}
