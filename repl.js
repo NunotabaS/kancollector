@@ -22,6 +22,7 @@ event.addEventListener("load", function(data){
 	var consts = {
 		db:data
 	};
+	api.load(consts.db.portcache ? consts.db.portcache : {});
 	repl.start({
 		prompt: "> ",
 		eval: function(cmd, context, filename, callback) {
@@ -85,6 +86,18 @@ event.addEventListener("cmd_key",function(v){
 	}
 });
 
+event.addEventListener("cmd_set",function(v){
+	var nkey = v.command[1];
+	var nval = v.command[2];
+	if(nkey && nkey !== ""){
+		v.db[nkey] = nval;
+		saveCache(v.db, function(){
+			v.callback("[OK] Set '" + nkey + "' as '" + nval + "'");
+		});
+		return;
+	}
+});
+
 event.addEventListener("cmd_server",function(v){
 	var nsrv = v.command[1];
 	if(nsrv && nsrv !== ""){
@@ -109,6 +122,27 @@ event.addEventListener("cmd_api",function(v){
 	api.api(entry, api.join(req, params), function(resp){
 		console.log(resp);
 		v.callback("RAW : " + resp.resp);
+	});
+	return;
+});
+
+event.addEventListener("cmd_port", function(v){
+	if(!v.db.portid){
+		v.callback("Portid not defined. Cannot proceed");
+		return;
+	}
+	api.port(v.db.key, v.db.portid, function(resp){
+		if(resp.code === 200){
+			v.db["portcache"] = resp.resp.data;
+			saveCache(v.db, function(){
+				v.callback("Port cache successfully updated");
+			});
+			return;
+		}else{
+			console.log(resp);
+			v.callback();
+			return;
+		}
 	});
 	return;
 });

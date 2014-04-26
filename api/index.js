@@ -2,6 +2,12 @@ var http = require("http");
 var config = require("./config.js");
 var expedition = require("./expedition.js");
 
+var cached_port_answer = {};
+
+exports.load = function(load){
+	cached_port_answer = load;
+}
+
 exports.config = function(conf){
 	config.server = conf;
 };
@@ -11,6 +17,16 @@ exports.create = function(token){
 		api_token: token,
 		api_verno: 1
 	};
+};
+
+function get_cached_answer(entry, callback){
+	if(cached_port_answer["api_" + entry]){
+		callback(cached_port_answer["api_" + entry]);
+		return;
+	}else{
+		callback(false);
+		return;
+	}
 };
 
 exports.api = function(entry, data, callback){
@@ -24,7 +40,7 @@ exports.api = function(entry, data, callback){
 			"Accept-Language":"ja,ja-JP;q=0.8",
 			"Origin":"http://" + config.server,
 			"Content-Type":"application/x-www-form-urlencoded",
-			"Referer":"http://" + config.server + "/kcs/port.swf?version=" + (config.mainVersion ? config.mainVersion : "1.6.2"),
+			"Referer":"http://" + config.server + "/kcs/Core.swf?version=" + (config.mainVersion ? config.mainVersion : "2.0.3"),
 			"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.29 Safari/537.36"
 		}
 	},function(res){
@@ -157,22 +173,25 @@ exports.result = function(key, deck_id, callback){
 };
 
 exports.teams = function(key, callback){
-	exports.api("get_member/deck_port",exports.create(key), function(resp){
-		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
-			callback({code:500, resp: resp});
+	get_cached_answer("deck_port", function(r){
+		if(r === false){
+			callback({code:-404, resp:{}, src:"Error-No-Cache"});
+			return;
 		}else{
 			var teams = [];
-			for(var i = 0; i < resp.parsed.api_data.length;i++){
-				var team = resp.parsed.api_data[i];
+			for(var i = 0; i < r.length;i++){
+				var team = r[i];
 				var team_stats = {};
 				for(var j in team){
 					team_stats[j.replace(/^api_/,"")] = team[j];
 				}
 				teams.push(team_stats);
 			}
-			callback({code:200, resp: teams, src: resp});
+			callback({code:200, resp: teams, src:r});
+			return;
 		}
 	});
+	return;
 };
 
 exports.charge = function(key, type, ship_ids,  callback){
@@ -226,6 +245,27 @@ exports.dock = function(key, dock_id, ship_id, highspeed, callback){
 			for(var j in resp.parsed){
 				data[j.replace(/^api_/,"")] = resp.parsed[j];
 			}
+			callback({code:200, resp: data, src: resp});
+		}
+	});
+};
+
+
+exports.port = function(key, portid, callback){
+	console.log("Port-ID:" + portid);
+	exports.api("port/port",exports.join(exports.create(key),{
+			"api_sort_key":5,
+			"spi_sort_order":2,
+			"api_port": portid
+		}), function(resp){
+		if(resp.code !== 200 || !resp.parsed || resp.parsed.api_result !== 1){
+			callback({code:500, resp: resp});
+		}else{
+			var data = {};
+			for(var j in resp.parsed){
+				data[j.replace(/^api_/,"")] = resp.parsed[j];
+			}
+			cached_port_answer = data['data'] ? data['data'] : {};
 			callback({code:200, resp: data, src: resp});
 		}
 	});
